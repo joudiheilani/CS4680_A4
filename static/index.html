@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237F95D1' stroke='%231C1B3A' stroke-width='3'/%3E%3Cpath d='M9 21l7-11 7 11-7-3z' fill='%23FFFFC7' stroke='%231C1B3A' stroke-width='1.5'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/static/styles.css?v=3">
+  <link rel="stylesheet" href="/static/styles.css?v=4">
 </head>
 <body>
   <header class="topbar">
@@ -24,6 +24,7 @@
     </div>
     <div class="top-actions">
       <span id="model-pill" class="pill" title="Language model in use">Connecting…</span>
+      <button id="help-btn" class="ghost help-btn" type="button" title="What StudyPilot can do, with examples"><span data-icon="help"></span><span class="label">What can it do?</span></button>
       <button id="reset-btn" class="ghost" type="button" title="Restore the starter files and clear the chat">Reset</button>
     </div>
   </header>
@@ -87,12 +88,67 @@
   <dialog id="file-dialog">
     <div class="dialog-head">
       <h3 id="file-title"></h3>
-      <button type="button" class="ghost" id="file-close" aria-label="Close"><span data-icon="x"></span></button>
+      <button type="button" class="ghost" id="file-close" data-close aria-label="Close"><span data-icon="x"></span></button>
     </div>
     <pre id="file-body"></pre>
   </dialog>
 
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="dialog-head">
+      <h3 id="help-title">What StudyPilot can do</h3>
+      <button type="button" class="ghost" data-close aria-label="Close"><span data-icon="x"></span></button>
+    </div>
+    <div class="help-body">
+      <p class="help-lead">Ask in plain English. The LLM plans the work as tool calls, the app checks each one, runs it in your private workspace, and sends the results back until the job is done.</p>
+      <ol class="how">
+        <li><span>1</span>You ask</li>
+        <li><span>2</span>The LLM plans tool calls as JSON</li>
+        <li><span>3</span>Each call is validated, and risky ones need your OK</li>
+        <li><span>4</span>Results go back to the LLM until it's done</li>
+      </ol>
+      <h4>Four kinds of actions</h4>
+      <ul class="caps">
+        <li class="d-files"><span class="cap-ico" data-icon="file"></span><div><strong>Files</strong><p>List, read, write, append and delete notes (.md .txt .csv .json)</p></div></li>
+        <li class="d-database"><span class="cap-ico" data-icon="database"></span><div><strong>Database</strong><p>Add, list, complete and delete tasks in a SQLite to-do list</p></div></li>
+        <li class="d-web"><span class="cap-ico" data-icon="globe"></span><div><strong>Web APIs</strong><p>Live weather forecasts and word definitions</p></div></li>
+        <li class="d-system"><span class="cap-ico" data-icon="terminal"></span><div><strong>System</strong><p>Safe shell commands (wc, grep, sort, head...) and a calculator</p></div></li>
+      </ul>
+      <h4>Safety</h4>
+      <p class="help-note">Deletes and overwrites wait for your approval. Unknown tools, paths outside your workspace and unsafe commands are blocked. Everything is in the Activity log.</p>
+      <h4>Try one</h4>
+      <div class="chips" id="help-chips"></div>
+    </div>
+  </dialog>
+
+  <dialog id="task-dialog" aria-labelledby="task-dialog-title">
+    <form id="task-form">
+      <div class="dialog-head">
+        <h3 id="task-dialog-title">Edit task</h3>
+        <button type="button" class="ghost" data-close aria-label="Close"><span data-icon="x"></span></button>
+      </div>
+      <div class="form-body">
+        <label>Title<input id="task-title" name="title" required maxlength="200" autocomplete="off"></label>
+        <div class="form-row">
+          <label>Due date<input id="task-due" name="due" type="date"></label>
+          <label>Priority
+            <select id="task-priority" name="priority">
+              <option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+            </select>
+          </label>
+        </div>
+        <label class="check"><input id="task-done" name="done" type="checkbox"> Done</label>
+        <p class="form-error" id="task-error" hidden></p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-delete" id="task-delete"><span data-icon="trash"></span>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="ghost" data-close>Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/static/app.js?v=3"></script>
+  <script src="/static/app.js?v=4"></script>
 </body>
 </html>

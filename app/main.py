@@ -22,6 +22,7 @@ from .prompts import tool_catalog
 from .sessions import SESSION_ID, SessionStore
 from .tools import ToolFailure
 from .tools.files import safe_path
+from .tools.tasks import TaskEdit, remove_task, update_task
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -164,6 +165,36 @@ async def read_log(request: Request, download: bool = False):
 @app.get("/api/tools")
 async def tools():
     return PlainTextResponse(tool_catalog())
+
+
+@app.patch("/api/tasks/{task_id}")
+async def edit_task(task_id: int, body: TaskEdit, request: Request):
+    """Let the user fix a task by hand (e.g. when the agent got a date wrong)."""
+    sess = _session(request)
+    if sess.lock.locked():
+        return _error(409, "Wait until the agent finishes before editing tasks.")
+    async with sess.lock:
+        try:
+            before, after = update_task(sess.db_path, task_id, body)
+        except ToolFailure as exc:
+            return _error(404 if "no task" in str(exc) else 400, str(exc))
+        changes = {k: [before[k], after[k]] for k in after if before[k] != after[k]}
+        audit.record(sess.id, sess.log_path, "user_edit", task_id=task_id, changes=changes)
+    return {"ok": True, "task": after, "workspace": agent.workspace(sess)}
+
+
+@app.delete("/api/tasks/{task_id}")
+async def delete_task(task_id: int, request: Request):
+    sess = _session(request)
+    if sess.lock.locked():
+        return _error(409, "Wait until the agent finishes before editing tasks.")
+    async with sess.lock:
+        try:
+            row = remove_task(sess.db_path, task_id)
+        except ToolFailure as exc:
+            return _error(404, str(exc))
+        audit.record(sess.id, sess.log_path, "user_delete", task_id=task_id, title=row["title"])
+    return {"ok": True, "workspace": agent.workspace(sess)}
 
 
 @app.post("/api/reset")

@@ -24,6 +24,8 @@ const ICON_PATHS = {
   ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
   pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
 };
 function icon(name) {
   return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
@@ -40,6 +42,8 @@ let busy = false;
 let currentBubble = null; // the agent bubble that receives the next batch of events
 let knownFiles = new Set();
 let knownTasks = new Set();
+let taskById = new Map(); // latest tasks, for the edit dialog
+let editingTask = null;
 
 // ------------------------------------------------------------------ utils
 
@@ -316,16 +320,81 @@ function renderWorkspace(ws) {
   $("#task-count").textContent = `${open} open`;
   if (!ws.tasks.length) tasks.append(el("li", "empty-list", "No tasks yet."));
   const nextTasks = new Set();
+  taskById = new Map(ws.tasks.map((t) => [t.id, t]));
   for (const t of ws.tasks) {
-    const key = `${t.id}:${t.done}`;
+    const key = `${t.id}:${t.done}:${t.title}:${t.due}:${t.priority}`;
     nextTasks.add(key);
     const li = el("li", `task${t.done ? " done" : ""}`);
     if (knownTasks.size && !knownTasks.has(key)) li.classList.add("flash");
     const meta = [`#${t.id}`, t.priority, fmtDue(t.due)].filter(Boolean).join(" · ");
-    li.innerHTML = `<span class="dot ${esc(t.priority)}" title="${esc(t.priority)} priority"></span><span><span class="title">${esc(t.title)}</span><span class="meta">${esc(meta)}</span></span>`;
+    li.innerHTML = `<span class="dot ${esc(t.priority)}" title="${esc(t.priority)} priority"></span><span class="task-text"><span class="title">${esc(t.title)}</span><span class="meta">${esc(meta)}</span></span><button type="button" class="task-edit" data-task-id="${t.id}" aria-label="Edit task: ${esc(t.title)}" title="Edit task">${icon("pencil")}</button>`;
     tasks.append(li);
   }
   knownTasks = nextTasks;
+}
+
+// ------------------------------------------------------------ task editing
+
+function openTaskEditor(id) {
+  const t = taskById.get(id);
+  if (!t) return;
+  editingTask = t;
+  $("#task-dialog-title").textContent = `Edit task #${t.id}`;
+  $("#task-title").value = t.title;
+  $("#task-due").value = t.due || "";
+  $("#task-priority").value = t.priority;
+  $("#task-done").checked = t.done;
+  $("#task-error").hidden = true;
+  $("#task-dialog").showModal();
+  $("#task-title").focus();
+}
+
+function showTaskError(message) {
+  const box = $("#task-error");
+  box.textContent = message;
+  box.hidden = false;
+}
+
+async function saveTask(e) {
+  e.preventDefault();
+  const t = editingTask;
+  if (!t) return;
+  const next = {
+    title: $("#task-title").value.trim(),
+    due: $("#task-due").value || "",
+    priority: $("#task-priority").value,
+    done: $("#task-done").checked,
+  };
+  if (!next.title) return showTaskError("The title can't be empty.");
+  const changes = {};
+  if (next.title !== t.title) changes.title = next.title;
+  if (next.due !== (t.due || "")) changes.due = next.due;
+  if (next.priority !== t.priority) changes.priority = next.priority;
+  if (next.done !== t.done) changes.done = next.done;
+  if (!Object.keys(changes).length) { $("#task-dialog").close(); return; }
+  try {
+    const res = await api(`/api/tasks/${t.id}`, { method: "PATCH", body: JSON.stringify(changes) });
+    $("#task-dialog").close();
+    renderWorkspace(res.workspace);
+    refreshLog();
+    toast(`Task #${t.id} updated.`);
+  } catch (err) {
+    showTaskError(err.message);
+  }
+}
+
+async function deleteTaskByHand() {
+  const t = editingTask;
+  if (!t || !confirm(`Delete task #${t.id} "${t.title}"? This can't be undone.`)) return;
+  try {
+    const res = await api(`/api/tasks/${t.id}`, { method: "DELETE" });
+    $("#task-dialog").close();
+    renderWorkspace(res.workspace);
+    refreshLog();
+    toast(`Task #${t.id} deleted.`);
+  } catch (err) {
+    showTaskError(err.message);
+  }
 }
 
 async function openFile(path) {
@@ -345,6 +414,7 @@ async function openFile(path) {
 const LOG_CLASS = {
   action: "action", confirmation: "warn", confirmation_requested: "warn", llm_call: "llm", reply: "llm",
   action_blocked: "bad", parse_error: "bad", llm_error: "bad", agent_error: "bad", rate_limited: "bad",
+  user_edit: "user", user_delete: "user",
 };
 
 function describe(e) {
@@ -360,6 +430,11 @@ function describe(e) {
     case "llm_error": case "agent_error": return e.error;
     case "rate_limited": return e.reason;
     case "workspace_reset": return "Workspace restored to the starter files";
+    case "user_edit": {
+      const parts = Object.entries(e.changes || {}).map(([k, [a, b]]) => `${k}: ${a ?? "none"} → ${b ?? "none"}`);
+      return `You edited task #${e.task_id}${parts.length ? ` (${parts.join(", ")})` : ""}`;
+    }
+    case "user_delete": return `You deleted task #${e.task_id} “${e.title}”`;
     default: return "";
   }
 }
@@ -407,9 +482,31 @@ async function init() {
     const btn = e.target.closest("button[data-prompt]");
     if (btn) send(btn.dataset.prompt);
   });
+
+  // "What can it do?" panel: same examples as the start screen, available at any time.
+  $("#help-chips").innerHTML = $("#chips").innerHTML;
+  $("#help-btn").addEventListener("click", () => $("#help-dialog").showModal());
+  $("#help-chips").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-prompt]");
+    if (!btn) return;
+    $("#help-dialog").close();
+    if (busy) { toast("Wait for the current request to finish."); return; }
+    send(btn.dataset.prompt);
+  });
+
+  // Task editing.
+  $("#tasks").addEventListener("click", (e) => {
+    const btn = e.target.closest(".task-edit");
+    if (btn) openTaskEditor(Number(btn.dataset.taskId));
+  });
+  $("#task-form").addEventListener("submit", saveTask);
+  $("#task-delete").addEventListener("click", deleteTaskByHand);
+
+  // Close buttons and backdrop clicks for every dialog.
+  document.querySelectorAll("dialog").forEach((d) => {
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-close]")) d.close(); });
+  });
   document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => selectTab(b.dataset.tab)));
-  $("#file-close").addEventListener("click", () => $("#file-dialog").close());
-  $("#file-dialog").addEventListener("click", (e) => { if (e.target.id === "file-dialog") e.target.close(); });
   $("#reset-btn").addEventListener("click", async () => {
     if (busy || !confirm("Reset your workspace? This restores the starter files, clears tasks and the chat.")) return;
     try {

@@ -108,6 +108,50 @@ class AddTaskArgs(_Args):
             raise ValueError("must be a date in YYYY-MM-DD format") from None
 
 
+class TaskEdit(_Args):
+    """A manual edit from the sidebar. Only the fields that are sent change."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    due: str | None = Field(default=None, description="YYYY-MM-DD, or empty to clear")
+    priority: Literal["low", "medium", "high"] | None = None
+    done: bool | None = None
+
+    _strip = field_validator("title")(AddTaskArgs._strip.__func__)
+    _iso_date = field_validator("due")(AddTaskArgs._iso_date.__func__)
+
+
+def update_task(db_path: Path, task_id: int, edit: TaskEdit) -> tuple[dict, dict]:
+    """Apply a manual edit. Returns (before, after) so the change can be logged."""
+    fields = edit.model_dump(exclude_unset=True)
+    with closing(connect(db_path)) as con:
+        before = _row(_get(con, task_id))
+        sets, params = [], []
+        for name in ("title", "due", "priority"):
+            if name in fields:
+                if name != "due" and fields[name] is None:
+                    raise ToolFailure(f"{name} can't be empty.")
+                sets.append(f"{name} = ?")
+                params.append(fields[name])
+        if "done" in fields and fields["done"] is not None:
+            sets.append("done = ?")
+            params.append(int(fields["done"]))
+            sets.append("completed_at = ?")
+            params.append(_now() if fields["done"] else None)
+        if sets:
+            con.execute(f"UPDATE tasks SET {', '.join(sets)} WHERE id = ?", (*params, task_id))
+            con.commit()
+        after = _row(_get(con, task_id))
+    return before, after
+
+
+def remove_task(db_path: Path, task_id: int) -> dict:
+    with closing(connect(db_path)) as con:
+        row = _row(_get(con, task_id))
+        con.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        con.commit()
+    return row
+
+
 class ListTasksArgs(_Args):
     status: Literal["open", "done", "all"] = "open"
 
