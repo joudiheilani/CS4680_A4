@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from . import clock
+
 CS3310_FINAL = """# CS3310 Design and Analysis of Algorithms: final exam study guide
 
 Final exam: {final_day}. Cumulative, but most of it is on the second half of the course.
@@ -103,7 +105,7 @@ SAMPLE_FILES: dict[str, str] = {
 
 def final_exam_day(today: date | None = None) -> date:
     """The CS3310 final in the sample notes: always two weeks out, so the demo stays current."""
-    return (today or date.today()) + timedelta(days=14)
+    return (today or clock.today()) + timedelta(days=14)
 
 
 def sample_files(today: date | None = None) -> dict[str, str]:
@@ -114,7 +116,7 @@ def sample_files(today: date | None = None) -> dict[str, str]:
 
 def sample_tasks(today: date | None = None) -> list[dict]:
     """Example to-do items, dated relative to today so they always look current."""
-    today = today or date.today()
+    today = today or clock.today()
 
     def d(days: int) -> str:
         return (today + timedelta(days=days)).isoformat()

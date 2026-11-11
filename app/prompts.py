@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 from datetime import date, timedelta
 
+from . import clock
 from .tools import DOMAIN_LABELS, REGISTRY
 
 SYSTEM_TEMPLATE = """You are StudyPilot, an AI agent that helps a college student manage their study workspace: notes and files, a to-do list, quick lookups and calculations. You don't just chat. You act by choosing tools, which the app validates and executes for you.
@@ -88,7 +89,7 @@ def build_system_prompt() -> str:
 
 
 def build_user_message(text: str, files: list[dict], open_tasks: int, today: date | None = None) -> str:
-    today = today or date.today()
+    today = today or clock.today()
     if files:
         shown = ", ".join(f["path"] for f in files[:25])
         if len(files) > 25:

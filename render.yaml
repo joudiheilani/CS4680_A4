@@ -10,7 +10,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
-      - key: TZ # so "today" (task dates, the model's context) matches California time
-        value: America/Los_Angeles
       - key: OPENROUTER_API_KEY
         sync: false # Render asks you to paste the key during setup
