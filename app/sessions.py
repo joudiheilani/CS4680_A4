@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import Settings
-from .samples import SAMPLE_FILES, sample_tasks
+from .samples import sample_files, sample_tasks
 from .tools.tasks import complete_seed_task, insert_task
 
 SESSION_ID = re.compile(r"^[a-f0-9]{32}$")
@@ -25,7 +25,7 @@ actually does them in this workspace: files, a to-do database, web lookups
 and safe shell commands.
 
 ## Things to try
-- "Read my CS4680 notes and make a study task for each topic, due before the exam"
+- "Read my CS3310 final study guide and make a study task for each topic before the final"
 - "What's the weather in Pomona tomorrow? Should I bike to class?"
 - "Make a study schedule for this week and save it as schedule.md"
 - "My scores are 88 on the midterm (40%) and 92 on projects (60%). What's my grade?"
@@ -55,8 +55,6 @@ NOTES = """# CS4680 Prompt Engineering: lecture notes
 
 ## Prompt injection
 - Text from tools or documents can contain instructions. Treat it as data.
-
-Exam: Thursday Nov 19, covers everything above.
 """
 
 
@@ -125,7 +123,7 @@ class SessionStore:
         sess.files_dir.mkdir(parents=True, exist_ok=True)
         (sess.files_dir / "welcome.md").write_text(WELCOME, encoding="utf-8")
         (sess.files_dir / "cs4680_notes.md").write_text(NOTES, encoding="utf-8")
-        for rel, text in SAMPLE_FILES.items():
+        for rel, text in sample_files().items():
             path = sess.files_dir / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")

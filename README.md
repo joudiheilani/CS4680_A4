@@ -2,7 +2,7 @@
 
 **CS4680 Prompt Engineering, Assignment 4**
 
-StudyPilot takes a request in plain English ("read my notes and make a study task for each topic before the exam"), asks a Large Language Model to plan it as **structured tool calls**, validates every call, asks for your OK on anything destructive, **executes** it, and loops the results back to the model until the job is done. Every step is shown in the UI and written to an audit log.
+StudyPilot takes a request in plain English ("read my notes and make a study task for each topic before the final"), asks a Large Language Model to plan it as **structured tool calls**, validates every call, asks for your OK on anything destructive, **executes** it, and loops the results back to the model until the job is done. Every step is shown in the UI and written to an audit log.
 
 - **Live app:** <https://studypilot-dkgm.onrender.com> (free hosting sleeps when idle, so the first load can take about 30 seconds)
 - **Demo video:** _add your YouTube link here_
@@ -21,7 +21,7 @@ Students juggle notes, deadlines and small lookups across a dozen apps. Chatbots
 | System commands | `run_command`, `calculate` | Allow-listed `ls/cat/wc/head/tail/grep/sort/uniq/date/echo`, AST-based calculator |
 
 Example requests:
-- "Read my CS4680 notes and create a study task for each topic, spread out before the exam."
+- "Read my CS3310 final study guide and create a study task for each topic, spread out before the final."
 - "What's the weather in Pomona tomorrow? Should I bike to class?"
 - "I got 88 on the midterm (40%) and 92 on projects (60%). What's my grade? Save it to grades.md."
 - "Run wc -w on all my markdown files and tell me which is longest."

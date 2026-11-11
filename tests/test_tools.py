@@ -120,7 +120,7 @@ def test_unsafe_commands_blocked(tmp_path, cmd):
 def test_glob_expansion_stays_in_workspace(ctx):
     argv = build_argv("wc -w *.md", ctx.files_dir)
     assert argv[:2] == ["wc", "-w"]
-    assert set(argv[2:]) == {"welcome.md", "cs4680_notes.md", "essay_draft.md", "notes/data_structures.md"}
+    assert set(argv[2:]) == {"welcome.md", "cs4680_notes.md", "notes/cs3310_final.md"}
 
 
 def test_new_workspace_has_sample_files_and_tasks(ctx):
