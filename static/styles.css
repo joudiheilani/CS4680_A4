@@ -10,9 +10,13 @@
   --mint: #A8E6C1;
   --lilac: #C7B8F5;
   --ink: #1C1B3A;
+  --sky: #D6E4FA;
+  /* periwinkle melting into sky and cream, so accents don't read as flat purple */
+  --blend: linear-gradient(135deg, #7F95D1 0%, #A8BDEB 38%, #DCE8FA 70%, #FFFFC7 100%);
+  --blend-soft: linear-gradient(135deg, #B3C3EC 0%, #E3ECFB 55%, #FFFFDD 100%);
 
   /* roles */
-  --bg: #EEF0FA;
+  --bg: #F8F8F2;
   --text: var(--ink);
   --muted: #55587A;
   --line: var(--ink);
@@ -32,11 +36,11 @@
   --database: var(--lilac);
   --web: var(--mint);
   --system: var(--coral);
-  --blob-a: rgba(127, 149, 209, .95);
-  --blob-b: rgba(255, 246, 150, .95);
-  --blob-c: rgba(255, 142, 114, .7);
+  --blob-a: rgba(127, 149, 209, .75);
+  --blob-b: rgba(255, 248, 160, .95);
+  --blob-c: rgba(255, 142, 114, .55);
   --blob-d: rgba(168, 230, 193, .85);
-  --blob-e: rgba(199, 184, 245, .8);
+  --blob-e: rgba(214, 228, 250, .95);
   --grid: rgba(28, 27, 58, .07);
 
   --bw: 2.5px;                                   /* border width */
@@ -52,13 +56,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #12132A;
+    --bg: #16171D;
     --text: #F4F3FF;
     --muted: #B4B7D8;
     --line: #05050F;
-    --shadow-color: var(--periwinkle);
-    --glass: linear-gradient(135deg, rgba(60, 64, 120, .55), rgba(28, 30, 62, .35) 60%, rgba(44, 47, 92, .45));
-    --glass-strong: rgba(44, 47, 92, .72);
+    --shadow-color: #D9E1F5;
+    --glass: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .04) 60%, rgba(255, 255, 255, .09));
+    --glass-strong: rgba(255, 255, 255, .08);
     --glass-edge: rgba(255, 255, 255, .22);
     --accent-text: var(--ink);
     --success: var(--mint);
@@ -67,11 +71,11 @@
     --danger-soft: #4D2420;
     --warn: var(--cream);
     --warn-soft: #45431F;
-    --blob-a: rgba(127, 149, 209, .75);
-    --blob-b: rgba(255, 255, 199, .22);
-    --blob-c: rgba(255, 142, 114, .4);
-    --blob-d: rgba(168, 230, 193, .28);
-    --blob-e: rgba(199, 184, 245, .45);
+    --blob-a: rgba(127, 149, 209, .5);
+    --blob-b: rgba(255, 255, 199, .26);
+    --blob-c: rgba(255, 142, 114, .3);
+    --blob-d: rgba(168, 230, 193, .3);
+    --blob-e: rgba(214, 228, 250, .16);
     --grid: rgba(255, 255, 255, .04);
     color-scheme: dark;
   }
@@ -192,9 +196,9 @@ code, pre { font-family: var(--mono); font-size: .86em; }
   box-shadow: var(--hard-sm), var(--sheen);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
-.chips button:nth-child(5n+1):hover { background: var(--periwinkle); }
+.chips button:nth-child(5n+1):hover { background: var(--blend-soft); }
 .chips button:nth-child(5n+2):hover { background: var(--cream); }
-.chips button:nth-child(5n+3):hover { background: var(--lilac); }
+.chips button:nth-child(5n+3):hover { background: var(--sky); }
 .chips button:nth-child(5n+4):hover { background: var(--mint); }
 .chips button:nth-child(5n+5):hover { background: var(--coral); }
 .chips button:hover { color: var(--ink); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow-color); }
@@ -204,7 +208,7 @@ code, pre { font-family: var(--mono); font-size: .86em; }
 .msg { display: flex; gap: 10px; align-items: flex-start; }
 .msg.user { justify-content: flex-end; }
 .msg.user .bubble {
-  background: var(--periwinkle); color: var(--ink); font-weight: 500;
+  background: var(--blend); color: var(--ink); font-weight: 500;
   border: var(--bw) solid var(--line); border-radius: 18px 18px 4px 18px; box-shadow: var(--hard-sm);
   padding: 10px 15px; max-width: min(78%, 620px); white-space: pre-wrap; word-wrap: break-word;
 }
@@ -289,6 +293,9 @@ code, pre { font-family: var(--mono); font-size: .86em; }
 .reply ul, .reply ol { margin: 4px 0 8px; padding-left: 22px; }
 .reply h4 { margin: 8px 0 4px; font: 700 15px/1.3 var(--display); }
 .reply strong { background: linear-gradient(transparent 55%, var(--cream) 55%); color: var(--ink); padding: 0 2px; }
+@media (prefers-color-scheme: dark) {
+  .reply strong { background: var(--cream); border-radius: 4px; padding: 0 4px; }
+}
 .reply pre { background: var(--glass-strong); border: 1.5px solid var(--line); padding: 10px; border-radius: 10px; overflow-x: auto; }
 .reply code { background: var(--glass-strong); border: 1px solid var(--line); padding: 0 5px; border-radius: 5px; }
 .reply pre code { background: none; border: 0; padding: 0; }
@@ -318,7 +325,7 @@ code, pre { font-family: var(--mono); font-size: .86em; }
 .composer textarea:focus { background: var(--cream); color: var(--ink); box-shadow: var(--hard-sm); }
 .composer button {
   flex: none; width: 46px; height: 46px; border: var(--bw) solid var(--line); border-radius: 14px;
-  background: var(--periwinkle); display: grid; place-items: center; box-shadow: var(--hard-sm);
+  background: var(--blend); display: grid; place-items: center; box-shadow: var(--hard-sm);
 }
 .composer button:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow-color); }
 .composer button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--shadow-color); }
@@ -335,7 +342,7 @@ code, pre { font-family: var(--mono); font-size: .86em; }
 }
 .tabs button:hover { color: var(--text); border-color: var(--line); }
 .tabs button[aria-selected="true"] {
-  background: var(--periwinkle); color: var(--ink); border-color: var(--line); box-shadow: var(--hard-sm);
+  background: var(--blend); color: var(--ink); border-color: var(--line); box-shadow: var(--hard-sm);
 }
 .panel { flex: 1; overflow-y: auto; padding: 4px 16px 16px; }
 .panel h3 {
@@ -387,7 +394,7 @@ code, pre { font-family: var(--mono); font-size: .86em; }
 }
 .log .k.action { background: var(--mint); }
 .log .k.bad { background: var(--coral); }
-.log .k.llm { background: var(--periwinkle); }
+.log .k.llm { background: var(--sky); }
 .log .k.warn { background: var(--cream); }
 .log time { float: right; color: var(--muted); font-size: 11px; }
 .log p { margin: 5px 0 0; overflow-wrap: anywhere; }
@@ -401,7 +408,7 @@ dialog {
 dialog::backdrop { background: rgba(28, 27, 58, .35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .dialog-head {
   display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;
-  border-bottom: var(--bw) solid var(--line); background: var(--periwinkle); color: var(--ink);
+  border-bottom: var(--bw) solid var(--line); background: var(--blend-soft); color: var(--ink);
 }
 .dialog-head h3 { margin: 0; font-size: 15px; font-family: var(--mono); }
 .dialog-head .ghost { padding: 3px 10px; }
