@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237F95D1' stroke='%231C1B3A' stroke-width='3'/%3E%3Cpath d='M9 21l7-11 7 11-7-3z' fill='%23FFFFC7' stroke='%231C1B3A' stroke-width='1.5'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/static/styles.css?v=4">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
+    <div class="brand" id="brand" title="Back to the start screen">
       <span class="logo" aria-hidden="true">
         <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="9"/><path d="M9 21l7-11 7 11-7-3z"/></svg>
       </span>
@@ -24,6 +24,7 @@
     </div>
     <div class="top-actions">
       <span id="model-pill" class="pill" title="Language model in use">Connecting…</span>
+      <button id="home-btn" class="ghost home-btn" type="button" title="Back to the start screen and its example prompts (starts a new chat; your files and tasks stay)"><span data-icon="home"></span><span class="label">Home</span></button>
       <button id="help-btn" class="ghost help-btn" type="button" title="What StudyPilot can do, with examples"><span data-icon="help"></span><span class="label">What can it do?</span></button>
       <button id="reset-btn" class="ghost" type="button" title="Restore the starter files and clear the chat">Reset</button>
     </div>
@@ -149,6 +150,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/static/app.js?v=4"></script>
+  <script src="/static/app.js?v=5"></script>
 </body>
 </html>

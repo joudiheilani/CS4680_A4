@@ -197,6 +197,20 @@ async def delete_task(task_id: int, request: Request):
     return {"ok": True, "workspace": agent.workspace(sess)}
 
 
+@app.post("/api/chat/clear")
+async def clear_chat(request: Request):
+    """Back to the start screen: forget the conversation but keep the files and tasks."""
+    sess = _session(request)
+    if sess.lock.locked():
+        return _error(409, "Wait until the agent finishes before starting a new chat.")
+    async with sess.lock:
+        sess.history.clear()
+        sess.transcript.clear()
+        sess.run = None  # drops any action that was still waiting for approval
+        audit.record(sess.id, sess.log_path, "chat_cleared")
+    return {"ok": True, "workspace": agent.workspace(sess)}
+
+
 @app.post("/api/reset")
 async def reset(request: Request):
     sess = _session(request)

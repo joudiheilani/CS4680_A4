@@ -510,6 +510,19 @@ dialog::backdrop { background: rgba(28, 27, 58, .35); backdrop-filter: blur(4px)
   .caps { grid-template-columns: 1fr; }
 }
 
+/* ---------- home ---------- */
+.home-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--glass-strong); color: var(--text); }
+.home-btn .icon { width: 16px; height: 16px; }
+#brand { cursor: pointer; }
+#brand:hover h1 { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--cream); text-underline-offset: 4px; }
+@media (max-width: 640px) {
+  .home-btn .label { display: none; }
+  .home-btn { padding: 6px 9px; }
+}
+@media (max-width: 480px) {
+  .pill { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

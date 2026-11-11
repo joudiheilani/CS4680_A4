@@ -56,3 +56,19 @@ def test_delete_task():
     ids = [x["id"] for x in c.get("/api/state").json()["workspace"]["tasks"]]
     assert t["id"] not in ids
     assert c.delete(f"/api/tasks/{t['id']}").status_code == 404
+
+
+def test_clear_chat_keeps_workspace():
+    c = _client()
+    c.post("/api/chat", json={"message": "list my files"})  # demo-mode brain, no API call
+    before = c.get("/api/state").json()
+    assert before["transcript"]
+    t = _task(c, "research report")
+    c.patch(f"/api/tasks/{t['id']}", json={"priority": "low"})
+
+    assert c.post("/api/chat/clear").status_code == 200
+    after = c.get("/api/state").json()
+    assert after["transcript"] == []
+    assert [f["path"] for f in after["workspace"]["files"]] == [f["path"] for f in before["workspace"]["files"]]
+    assert _task(c, "research report")["priority"] == "low"  # edits survive
+    assert any(e["kind"] == "chat_cleared" for e in c.get("/api/log").json()["entries"])

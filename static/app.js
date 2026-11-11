@@ -24,6 +24,7 @@ const ICON_PATHS = {
   ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
   pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
   pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
 };
@@ -397,6 +398,32 @@ async function deleteTaskByHand() {
   }
 }
 
+// ------------------------------------------------------------- home screen
+
+function clearChatView() {
+  messagesEl.querySelectorAll(".msg").forEach((m) => m.remove());
+  emptyEl.hidden = false;
+  currentBubble = null;
+  messagesEl.scrollTop = 0;
+}
+
+// Back to the start screen with the example prompts. Starts a new chat on the
+// server too (so the model doesn't carry the old conversation), but keeps files and tasks.
+async function goHome() {
+  if (busy) { toast("Wait for the current request to finish."); return; }
+  if (!messagesEl.querySelector(".msg")) { input.focus(); return; } // already home
+  try {
+    const res = await api("/api/chat/clear", { method: "POST" });
+    clearChatView();
+    renderWorkspace(res.workspace);
+    refreshLog();
+    toast("New chat started. Your files and tasks are unchanged.");
+    input.focus();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
 async function openFile(path) {
   try {
     const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`, { credentials: "same-origin" });
@@ -430,6 +457,7 @@ function describe(e) {
     case "llm_error": case "agent_error": return e.error;
     case "rate_limited": return e.reason;
     case "workspace_reset": return "Workspace restored to the starter files";
+    case "chat_cleared": return "New chat started (files and tasks kept)";
     case "user_edit": {
       const parts = Object.entries(e.changes || {}).map(([k, [a, b]]) => `${k}: ${a ?? "none"} → ${b ?? "none"}`);
       return `You edited task #${e.task_id}${parts.length ? ` (${parts.join(", ")})` : ""}`;
@@ -486,6 +514,8 @@ async function init() {
   // "What can it do?" panel: same examples as the start screen, available at any time.
   $("#help-chips").innerHTML = $("#chips").innerHTML;
   $("#help-btn").addEventListener("click", () => $("#help-dialog").showModal());
+  $("#home-btn").addEventListener("click", goHome);
+  $("#brand").addEventListener("click", goHome);
   $("#help-chips").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-prompt]");
     if (!btn) return;
@@ -511,9 +541,7 @@ async function init() {
     if (busy || !confirm("Reset your workspace? This restores the starter files, clears tasks and the chat.")) return;
     try {
       const res = await api("/api/reset", { method: "POST" });
-      messagesEl.querySelectorAll(".msg").forEach((m) => m.remove());
-      emptyEl.hidden = false;
-      currentBubble = null;
+      clearChatView();
       knownFiles = new Set(); knownTasks = new Set();
       renderWorkspace(res.workspace);
       refreshLog();
