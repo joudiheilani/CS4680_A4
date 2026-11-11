@@ -403,7 +403,7 @@ async function init() {
     const pill = $("#model-pill");
     pill.textContent = state.mock ? "Demo mode · no API key" : state.model;
     pill.classList.add(state.mock ? "demo" : "live");
-    if (state.mock) pill.title = "No GROQ_API_KEY is set, so a rule-based demo brain stands in for the LLM.";
+    if (state.mock) pill.title = "No OPENROUTER_API_KEY is set, so a rule-based demo brain stands in for the LLM.";
     for (const entry of state.transcript) {
       if (entry.role === "user") addUser(entry.text);
       else renderEntry(entry);

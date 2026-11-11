@@ -32,7 +32,7 @@ Example requests:
 ```mermaid
 flowchart LR
     U[User request] --> P[Prompt builder<br/>system prompt + context + history]
-    P --> L[LLM module<br/>Groq API, retries, fallback]
+    P --> L[LLM module<br/>OpenRouter API, retries, fallback]
     L --> X[Parser<br/>extract + normalise JSON]
     X -- invalid --> R[Repair prompt] --> L
     X --> V[Validator<br/>tool exists? args valid? path safe?]
@@ -59,7 +59,7 @@ The model always answers with one JSON object:
 
 | Requirement | Where |
 |---|---|
-| **LLM integration**: connect, send prompts, receive responses | [app/llm.py](app/llm.py): OpenAI-compatible client for Groq (`llama-3.3-70b-versatile`) |
+| **LLM integration**: connect, send prompts, receive responses | [app/llm.py](app/llm.py): OpenAI-compatible client for OpenRouter (free `google/gemma-4-31b-it:free`, falling back to `openrouter/free`) |
 | Handle API errors and rate limiting | Honours `Retry-After` on 429, exponential backoff with jitter on 5xx/timeouts, switches to a fallback model when a wait is too long, fails fast on bad keys, retries without JSON mode if the provider rejects the JSON. Per-visitor and per-IP rate limits in [app/sessions.py](app/sessions.py) protect the free quota. |
 | **Action interpreter**: parse LLM output into commands | [app/parser.py](app/parser.py) strips fences, finds the JSON object in surrounding prose, accepts common aliases (`arguments`→`args`, `name`→`tool`...) |
 | Convert responses into executable operations | [app/tools/](app/tools): registry of typed tools; each has a pydantic argument model |
@@ -106,7 +106,7 @@ copy .env.example .env          # macOS/Linux: cp .env.example .env, then paste 
 uvicorn app.main:app --reload   # open http://localhost:8000
 ```
 
-Get a free Groq key (no credit card) at <https://console.groq.com/keys>. Without a key the app runs in **demo mode**: a small rule-based stand-in for the LLM, so the full validate/confirm/execute pipeline can still be tried offline.
+Get a free OpenRouter key (no credit card) at <https://openrouter.ai/settings/keys> and put it in `.env` as `OPENROUTER_API_KEY`. Free models allow about 50 requests a day per key, so the app keeps per-visitor limits low. Without a key the app runs in **demo mode**: a small rule-based stand-in for the LLM, so the full validate/confirm/execute pipeline can still be tried offline.
 
 Terminal version: `python cli.py`
 
@@ -120,7 +120,7 @@ pytest
 
 1. Push this repo to GitHub.
 2. On <https://render.com>: **New + → Blueprint**, pick the repo (it reads `render.yaml`).
-3. Paste your `GROQ_API_KEY` when asked. Deploy, then open the `.onrender.com` URL.
+3. Paste your `OPENROUTER_API_KEY` when asked. Deploy, then open the `.onrender.com` URL.
 
 Free Render instances sleep after 15 minutes idle, so the first visit can take about 30 seconds to wake up. Workspaces are stored on the instance's temporary disk and reset on redeploy.
 
@@ -130,7 +130,7 @@ Free Render instances sleep after 15 minutes idle, so the first visit can take a
 app/
   main.py        FastAPI routes, session cookie, rate limiting
   agent.py       the ReAct loop: parse → validate → confirm → execute → observe
-  llm.py         Groq/OpenAI-compatible client with retries and fallback
+  llm.py         OpenRouter/OpenAI-compatible client with retries and fallback
   prompts.py     system prompt, few-shot examples, context and repair prompts
   parser.py      robust JSON extraction and normalisation
   tools/         files.py, tasks.py (SQLite), web.py (APIs), system.py (commands, calculator)

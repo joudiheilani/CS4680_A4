@@ -96,3 +96,16 @@ def test_json_mode_failure_retries_without_json_mode():
     c, _ = client(handler)
     res = asyncio.run(c.chat([]))
     assert res.text == "text {}" and "response_format" not in bodies[-1]
+
+
+def test_daily_quota_fails_fast_without_fallback():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(429, json={"error": {"message": "Rate limit exceeded: free-models-per-day"}})
+
+    c, slept = client(handler)
+    with pytest.raises(LLMError) as err:
+        asyncio.run(c.chat([]))
+    assert err.value.kind == "quota" and len(calls) == 1 and slept == []

@@ -24,12 +24,16 @@ def _int(name: str, default: int) -> int:
 
 @dataclass
 class Settings:
-    api_key: str = field(default_factory=lambda: _env("GROQ_API_KEY"))
-    base_url: str = field(
-        default_factory=lambda: _env("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    # OPENROUTER_API_KEY is the documented name; LLM_API_KEY / GROQ_API_KEY also work.
+    api_key: str = field(
+        default_factory=lambda: _env("OPENROUTER_API_KEY") or _env("LLM_API_KEY") or _env("GROQ_API_KEY")
     )
-    model: str = field(default_factory=lambda: _env("LLM_MODEL", "llama-3.3-70b-versatile"))
-    fallback_model: str = field(default_factory=lambda: _env("LLM_FALLBACK_MODEL", "llama-3.1-8b-instant"))
+    base_url: str = field(
+        default_factory=lambda: _env("LLM_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+    )
+    model: str = field(default_factory=lambda: _env("LLM_MODEL", "google/gemma-4-31b-it:free"))
+    # "openrouter/free" routes to whichever free model is available right now.
+    fallback_model: str = field(default_factory=lambda: _env("LLM_FALLBACK_MODEL", "openrouter/free"))
     mock: bool = field(default_factory=lambda: _env("LLM_MOCK").lower() in ("1", "true", "yes"))
     data_dir: Path = field(default_factory=lambda: Path(_env("DATA_DIR", "data")))
 
@@ -42,9 +46,10 @@ class Settings:
     llm_max_retries: int = 3
     llm_max_wait: float = 20.0  # longest rate-limit wait before switching to the fallback model
 
-    # Abuse protection for the public deployment
+    # Abuse protection for the public deployment. OpenRouter's free tier allows about
+    # 50 requests/day per key without credits, shared by every visitor.
     rate_per_minute: int = field(default_factory=lambda: _int("RATE_LIMIT_PER_MINUTE", 6))
-    rate_per_day: int = field(default_factory=lambda: _int("RATE_LIMIT_PER_DAY", 120))
+    rate_per_day: int = field(default_factory=lambda: _int("RATE_LIMIT_PER_DAY", 25))
     session_ttl_hours: int = 24
     max_concurrent_runs: int = 3
 

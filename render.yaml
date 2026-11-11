@@ -10,5 +10,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
-      - key: GROQ_API_KEY
+      - key: OPENROUTER_API_KEY
         sync: false # Render asks you to paste the key during setup

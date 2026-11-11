@@ -1,12 +1,13 @@
 """LLM integration module.
 
-Talks to any OpenAI-compatible chat-completions endpoint (Groq by default) and
+Talks to any OpenAI-compatible chat-completions endpoint (OpenRouter by default) and
 handles the failure modes a free API tier actually produces:
 
 * 429 rate limits   -> honour Retry-After, back off, then switch to a fallback model
 * 5xx / timeouts    -> exponential backoff with jitter
 * bad JSON mode     -> retry once without JSON mode (the parser can still recover)
 * 401/403           -> fail fast with a clear message (retrying won't help)
+* daily quota used  -> fail fast; the fallback model shares the same quota
 * 404 model gone    -> switch to the fallback model
 """
 
@@ -95,7 +96,12 @@ class ChatClient:
             base_url=settings.base_url,
             timeout=settings.llm_timeout,
             transport=transport,
-            headers={"Authorization": f"Bearer {settings.api_key}"},
+            headers={
+                "Authorization": f"Bearer {settings.api_key}",
+                # Optional OpenRouter attribution headers; other providers ignore them.
+                "HTTP-Referer": "https://github.com/joudiheilani/CS4680_A4",
+                "X-Title": "StudyPilot",
+            },
         )
 
     async def aclose(self) -> None:
@@ -172,11 +178,11 @@ class ChatClient:
 
                 if status in (401, 403):
                     raise LLMError(
-                        "The LLM API key was rejected. Check GROQ_API_KEY on the server.", kind="auth"
+                        "The LLM API key was rejected. Check OPENROUTER_API_KEY on the server.", kind="auth"
                     )
 
                 if status == 400 and json_mode and "json" in detail.lower():
-                    # Groq rejects replies that fail its JSON validator; our parser is more forgiving.
+                    # Some providers reject replies that fail their JSON validator; our parser is more forgiving.
                     json_mode = False
                     notices.append("Model produced malformed JSON; retrying without JSON mode.")
                     continue
@@ -189,6 +195,19 @@ class ChatClient:
                     raise LLMError(
                         "That request was too large for the free model. Try a shorter message or reset the chat.",
                         kind="too_large",
+                    )
+
+                if status == 402:
+                    raise LLMError(
+                        "The LLM account is out of credits. Free models need a balance of at least $0.",
+                        kind="quota",
+                    )
+
+                if status == 429 and "per-day" in detail.lower():
+                    raise LLMError(
+                        "Today's free LLM quota is used up (it resets at midnight UTC). "
+                        "The app still works in demo mode if you restart it without a key.",
+                        kind="quota",
                     )
 
                 if status == 429:
