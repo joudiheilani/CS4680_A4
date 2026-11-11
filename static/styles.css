@@ -419,6 +419,28 @@ dialog::backdrop { background: rgba(28, 27, 58, .35); backdrop-filter: blur(4px)
   box-shadow: 4px 4px 0 var(--ink); z-index: 10; max-width: calc(100vw - 32px);
 }
 
+/* ---------- icons ---------- */
+.icon { width: 1em; height: 1em; flex: none; display: inline-block; vertical-align: -0.15em; }
+.chips button { display: inline-flex; align-items: center; gap: 8px; }
+.chip-ico {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: -6px; border-radius: 7px;
+  border: 1.5px solid var(--line); color: var(--ink); font-size: 14px;
+}
+.chip-ico .icon { width: 14px; height: 14px; }
+.i-book { background: var(--sky); }
+.i-weather { background: var(--cream); }
+.i-calc { background: var(--mint); }
+.i-laptop { background: var(--lilac); }
+.i-trash { background: var(--coral); }
+.domain { display: inline-flex; align-items: center; gap: 4px; }
+.domain .icon { width: 11px; height: 11px; stroke-width: 2.6; }
+.badge { display: inline-flex; align-items: center; gap: 4px; }
+.badge .icon { width: 11px; height: 11px; stroke-width: 3; }
+.file-btn > .icon { width: 17px; height: 17px; color: var(--muted); }
+.file-btn:hover > .icon { color: var(--ink); }
+#file-close { display: inline-grid; place-items: center; }
+#file-close .icon { width: 16px; height: 16px; stroke-width: 2.8; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

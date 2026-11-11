@@ -7,10 +7,34 @@ const input = $("#input");
 const sendBtn = $("#send");
 
 const DOMAIN_NAMES = { files: "Files", database: "Database", web: "Web API", system: "System", unknown: "Rejected" };
-const STATUS_TEXT = {
-  success: "✓ Done", error: "✕ Failed", blocked: "⛔ Blocked", pending: "⏸ Needs approval",
-  approved: "✓ Approved", rejected: "Rejected",
+
+// Line icons (shapes from Lucide, ISC licence: https://lucide.dev). Stroke uses currentColor.
+const ICON_PATHS = {
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  weather: '<path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.95 12.65a4 4 0 0 0-5.93-4.13"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>',
+  calculator: '<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 6h8"/><path d="M16 14v4"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+  laptop: '<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  terminal: '<path d="m4 17 6-6-6-6"/><path d="M12 19h8"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
 };
+function icon(name) {
+  return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
+}
+const DOMAIN_ICONS = { files: "file", database: "database", web: "globe", system: "terminal", unknown: "ban" };
+const STATUS_ICONS = { success: "check", error: "x", blocked: "ban", pending: "pause", approved: "check", rejected: "undo" };
+const STATUS_TEXT = {
+  success: "Done", error: "Failed", blocked: "Blocked", pending: "Needs approval",
+  approved: "Approved", rejected: "Rejected",
+};
+const badgeHtml = (status) => `${icon(STATUS_ICONS[status])}${esc(STATUS_TEXT[status] || status)}`;
 
 let busy = false;
 let currentBubble = null; // the agent bubble that receives the next batch of events
@@ -139,10 +163,10 @@ function renderAction(ev) {
   if (ev.pending_id) li.dataset.pendingId = ev.pending_id;
   li.innerHTML = `
     <div class="action-head">
-      <span class="domain">${esc(DOMAIN_NAMES[ev.domain] || ev.domain || "")}</span>
+      <span class="domain">${icon(DOMAIN_ICONS[ev.domain] || "ban")}${esc(DOMAIN_NAMES[ev.domain] || ev.domain || "")}</span>
       <code class="tool">${esc(ev.tool)}</code>
       <span class="args">${esc(formatArgs(ev.args))}</span>
-      <span class="badge">${esc(STATUS_TEXT[ev.status] || ev.status)}</span>
+      <span class="badge">${badgeHtml(ev.status)}</span>
     </div>
     <p class="summary"${ev.status === "pending" ? " hidden" : ""}>${esc(ev.summary || "")}</p>`;
   const result = formatResult(ev.result);
@@ -236,7 +260,7 @@ async function decide(pendingId, approve, li) {
   box?.remove();
   li.querySelector(".summary").hidden = false;
   li.className = li.className.replace(/s-\w+/, approve ? "s-approved" : "s-rejected");
-  li.querySelector(".badge").textContent = approve ? STATUS_TEXT.approved : STATUS_TEXT.rejected;
+  li.querySelector(".badge").innerHTML = badgeHtml(approve ? "approved" : "rejected");
   if (!approve) li.querySelector(".summary").textContent += " You rejected it, so it was not run.";
   currentBubble = li.closest(".bubble");
   const stop = showThinking();
@@ -278,7 +302,7 @@ function renderWorkspace(ws) {
     nextFiles.add(key);
     const li = el("li");
     if (knownFiles.size && !knownFiles.has(key)) li.classList.add("flash");
-    const btn = el("button", "file-btn", `<span aria-hidden="true">📄</span><span class="name">${esc(f.path)}</span><span class="size">${fmtSize(f.size)}</span>`);
+    const btn = el("button", "file-btn", `${icon("file")}<span class="name">${esc(f.path)}</span><span class="size">${fmtSize(f.size)}</span>`);
     btn.type = "button";
     btn.addEventListener("click", () => openFile(f.path));
     li.append(btn);
@@ -377,6 +401,8 @@ async function init() {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(input.value); }
   });
   input.addEventListener("input", autosize);
+  // Fill the example buttons' icon slots (data-icon="...").
+  document.querySelectorAll("[data-icon]").forEach((slot) => { slot.innerHTML = icon(slot.dataset.icon); });
   $("#chips").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-prompt]");
     if (btn) send(btn.dataset.prompt);
