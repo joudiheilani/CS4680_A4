@@ -107,6 +107,9 @@ class Agent:
             raise AgentBusy("There is no pending action with that id (it may have been handled already).")
         pending, run.pending = run.pending, None
         tool, args = run.queue.pop(0)
+        # A reply the model wrote before the user decided can't describe the outcome
+        # (it tends to say "please confirm"), so always ask for a fresh final reply.
+        run.turn_done = False
         self._audit(sess, "confirmation", tool=tool.name, args=pending.args, approved=approve)
         for event in run.events:  # update the card the UI already shows (and the saved transcript)
             if event.get("pending_id") == pending.id:

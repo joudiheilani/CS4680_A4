@@ -10,8 +10,9 @@ Techniques used (each one is called out in the README):
 4. ReAct loop: thought -> actions -> TOOL RESULTS -> next thought, until done.
 5. Few-shot examples showing a one-step task, a multi-step task, a
    clarifying question and a refusal.
-6. Context injection: today's date and a snapshot of the workspace, so the
-   model resolves "Friday" or "my notes" without wasting a tool call.
+6. Context injection: today's date, the dates of the coming week and a
+   snapshot of the workspace, so the model resolves "Friday" or "my notes"
+   without doing date arithmetic or wasting a tool call.
 7. Self-correction: validation errors are fed back to the model with the
    exact problem so it can repair its own output.
 8. Prompt-injection defence: tool results are wrapped and labelled as data.
@@ -20,7 +21,7 @@ Techniques used (each one is called out in the README):
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, timedelta
 
 from .tools import DOMAIN_LABELS, REGISTRY
 
@@ -94,8 +95,12 @@ def build_user_message(text: str, files: list[dict], open_tasks: int, today: dat
             shown += f" (+{len(files) - 25} more)"
     else:
         shown = "(empty)"
+    # Spelling out the coming week stops the model from miscounting weekdays.
+    week = ", ".join(
+        f"{d.strftime('%a')} {d.isoformat()}" for d in (today + timedelta(days=i) for i in range(1, 8))
+    )
     return (
-        f"(Context: today is {today.isoformat()}, a {today.strftime('%A')}. "
+        f"(Context: today is {today.isoformat()}, a {today.strftime('%A')}. Next 7 days: {week}. "
         f"Workspace files: {shown}. Open tasks: {open_tasks}.)\n"
         f"User: {text}"
     )

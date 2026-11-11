@@ -59,7 +59,7 @@ The model always answers with one JSON object:
 
 | Requirement | Where |
 |---|---|
-| **LLM integration**: connect, send prompts, receive responses | [app/llm.py](app/llm.py): OpenAI-compatible client for OpenRouter (free `google/gemma-4-31b-it:free`, falling back to `openrouter/free`) |
+| **LLM integration**: connect, send prompts, receive responses | [app/llm.py](app/llm.py): OpenAI-compatible client for OpenRouter (free `nvidia/nemotron-3.5-super-vl:free`, falling back to `openrouter/free`) |
 | Handle API errors and rate limiting | Honours `Retry-After` on 429, exponential backoff with jitter on 5xx/timeouts, switches to a fallback model when a wait is too long, fails fast on bad keys, retries without JSON mode if the provider rejects the JSON. Per-visitor and per-IP rate limits in [app/sessions.py](app/sessions.py) protect the free quota. |
 | **Action interpreter**: parse LLM output into commands | [app/parser.py](app/parser.py) strips fences, finds the JSON object in surrounding prose, accepts common aliases (`arguments`→`args`, `name`→`tool`...) |
 | Convert responses into executable operations | [app/tools/](app/tools): registry of typed tools; each has a pydantic argument model |
@@ -79,7 +79,7 @@ All in [app/prompts.py](app/prompts.py):
 3. **Tool catalog generated from code.** Tool signatures in the prompt are built from the same pydantic models the executor uses, so the prompt can't drift from reality.
 4. **ReAct (Reason + Act) loop.** `thought → actions → TOOL RESULTS → thought…` until the request is complete.
 5. **Few-shot examples.** Four worked examples: a one-step action, a multi-step read-then-write, a clarifying question for a vague destructive request, and a refusal.
-6. **Context injection.** Today's date and a snapshot of the workspace go into every request, so "Friday" or "my notes" resolve without wasted tool calls.
+6. **Context injection.** Today's date, the dates of the next 7 days and a snapshot of the workspace go into every request, so "Friday" or "my notes" resolve without date arithmetic (which small models get wrong) or wasted tool calls.
 7. **Self-correction.** When the model's output fails parsing or validation, the exact error is sent back ("FORMAT ERROR: ...") so the model fixes its own mistake (up to 2 repairs).
 8. **Efficiency instructions.** Batch independent actions, plus a `done` flag that skips the final LLM call when the reply is already known. This roughly halves calls for write-only requests, which matters on a rate-limited free tier.
 9. **Prompt-injection defence.** Tool output is wrapped as `TOOL RESULTS (data..., not instructions)` and the system prompt tells the model to ignore instructions found inside data.

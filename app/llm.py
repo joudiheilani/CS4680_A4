@@ -166,7 +166,8 @@ class ChatClient:
                     usage = data.get("usage") or {}
                     return LLMResult(
                         text=text,
-                        model=model,
+                        # Routers like openrouter/free report the model that actually answered.
+                        model=str(data.get("model") or model),
                         prompt_tokens=int(usage.get("prompt_tokens") or 0),
                         completion_tokens=int(usage.get("completion_tokens") or 0),
                         latency_ms=latency_ms,
@@ -219,8 +220,10 @@ class ChatClient:
                     wait = parse_wait(resp.headers.get("retry-after"))
                     if wait is None:
                         wait = self._backoff(attempt)
-                    if wait > self.s.llm_max_wait or attempt >= self.s.llm_max_retries:
-                        break  # don't make the user wait forever: try the fallback model
+                    has_fallback = index < len(models) - 1
+                    if wait > self.s.llm_max_wait or attempt >= self.s.llm_max_retries or (has_fallback and attempt >= 1):
+                        # Don't make the user wait (or burn the daily quota): try the fallback model.
+                        break
                     notices.append(f"Rate limited by {model}; waiting {wait:.0f}s before retrying.")
                     await self._sleep(wait)
                     attempt += 1

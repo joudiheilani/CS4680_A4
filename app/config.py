@@ -31,7 +31,7 @@ class Settings:
     base_url: str = field(
         default_factory=lambda: _env("LLM_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
     )
-    model: str = field(default_factory=lambda: _env("LLM_MODEL", "google/gemma-4-31b-it:free"))
+    model: str = field(default_factory=lambda: _env("LLM_MODEL", "nvidia/nemotron-3.5-super-vl:free"))
     # "openrouter/free" routes to whichever free model is available right now.
     fallback_model: str = field(default_factory=lambda: _env("LLM_FALLBACK_MODEL", "openrouter/free"))
     mock: bool = field(default_factory=lambda: _env("LLM_MOCK").lower() in ("1", "true", "yes"))

@@ -62,14 +62,18 @@ def test_hallucinated_tool_is_blocked_not_run(settings, audit, session):
 def test_delete_requires_confirmation_approve(settings, audit, session):
     agent, llm = make_agent(
         settings, audit,
-        [turn("del", [{"tool": "delete_file", "args": {"path": "welcome.md"}}], done=True, reply="Deleted welcome.md.")],
+        [turn("del", [{"tool": "delete_file", "args": {"path": "welcome.md"}}], done=True,
+              reply="Please confirm the deletion."),
+         turn("done", reply="Deleted welcome.md.")],
     )
     res = asyncio.run(agent.start(session, "delete welcome.md"))
     assert res["pending"] and res["reply"] is None
     assert (session.files_dir / "welcome.md").exists()  # nothing happens before approval
 
     res2 = asyncio.run(agent.confirm(session, res["pending"]["id"], approve=True))
+    # The pre-approval reply is discarded; the model writes the final one after seeing the result.
     assert res2["reply"] == "Deleted welcome.md."
+    assert '"tool": "delete_file", "status": "ok"' in llm.calls[1][-1]["content"]
     assert not (session.files_dir / "welcome.md").exists()
     assert session.run is None
 
