@@ -1,0 +1,14 @@
+# One-click deploy on Render (free tier): New + > Blueprint > pick this repo.
+services:
+  - type: web
+    name: studypilot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: GROQ_API_KEY
+        sync: false # Render asks you to paste the key during setup

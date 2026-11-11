@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyPilot · AI study agent</title>
+  <meta name="description" content="An AI agent that turns natural-language requests into real actions on your study workspace.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M9 21l7-11 7 11-7-3z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="9"/><path d="M9 21l7-11 7 11-7-3z"/></svg>
+      </span>
+      <div>
+        <h1>StudyPilot</h1>
+        <p>An AI agent that acts on your study workspace</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="model-pill" class="pill" title="Language model in use">Connecting…</span>
+      <button id="reset-btn" class="ghost" type="button" title="Restore the starter files and clear the chat">Reset</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="chat" aria-label="Conversation">
+      <div id="messages" class="messages" aria-live="polite">
+        <div id="empty" class="empty">
+          <h2>What should I take care of?</h2>
+          <p>Ask in plain English. I plan the steps, run them in your private workspace, and show you every action.</p>
+          <ol class="how">
+            <li><span>1</span>You ask</li>
+            <li><span>2</span>The LLM plans tool calls as JSON</li>
+            <li><span>3</span>Each call is validated, and risky ones need your OK</li>
+            <li><span>4</span>Results go back to the LLM until it's done</li>
+          </ol>
+          <div class="chips" id="chips">
+            <button type="button" data-prompt="Read my CS4680 notes and create a study task for each topic, spread out before the exam.">📚 Turn my notes into study tasks</button>
+            <button type="button" data-prompt="What's the weather in Pomona tomorrow? Should I bike to class?">🌤️ Weather for my commute</button>
+            <button type="button" data-prompt="I got 88 on the midterm (worth 40%) and 92 on projects (worth 60%). What's my grade? Save the calculation to grades.md.">🧮 Calculate my grade</button>
+            <button type="button" data-prompt="Run wc -w on all my markdown files and tell me which is longest.">💻 Count words with a command</button>
+            <button type="button" data-prompt="Delete welcome.md">🗑️ Delete a file (asks first)</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="composer" class="composer" autocomplete="off">
+        <label for="input" class="sr-only">Message</label>
+        <textarea id="input" rows="1" maxlength="1500" placeholder="Ask StudyPilot to do something…"></textarea>
+        <button id="send" type="submit" aria-label="Send">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4l17.4-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.2 1l1.9 6.4 9 1-9 1-1.9 6.4c-.2.7.5 1.3 1.2 1z"/></svg>
+        </button>
+      </form>
+      <p class="hint">Enter to send · Shift+Enter for a new line · Deletes and overwrites always ask first</p>
+    </section>
+
+    <aside class="side" aria-label="Workspace and activity log">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-btn-workspace" aria-selected="true" aria-controls="tab-workspace" data-tab="workspace">Workspace</button>
+        <button role="tab" id="tab-btn-log" aria-selected="false" aria-controls="tab-log" data-tab="log">Activity log</button>
+      </div>
+
+      <div id="tab-workspace" class="panel" role="tabpanel" aria-labelledby="tab-btn-workspace">
+        <h3>Files <span id="file-count" class="count"></span></h3>
+        <ul id="files" class="list"></ul>
+        <h3>Tasks <span id="task-count" class="count"></span></h3>
+        <ul id="tasks" class="list"></ul>
+        <p class="fine">Your workspace is private to this browser and is cleared after 24 hours of inactivity.</p>
+      </div>
+
+      <div id="tab-log" class="panel" role="tabpanel" aria-labelledby="tab-btn-log" hidden>
+        <div class="log-head">
+          <span>Every request, LLM call and action, newest first</span>
+          <a href="/api/log?download=1" download>Download</a>
+        </div>
+        <ol id="log" class="log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="file-dialog">
+    <div class="dialog-head">
+      <h3 id="file-title"></h3>
+      <button type="button" class="ghost" id="file-close" aria-label="Close">✕</button>
+    </div>
+    <pre id="file-body"></pre>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
