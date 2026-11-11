@@ -66,6 +66,13 @@ def insert_task(db_path: Path, title: str, due: str | None = None, priority: str
         return _row(row)
 
 
+def complete_seed_task(db_path: Path, task_id: int) -> None:
+    """Mark a starter task as done (used when seeding a new workspace)."""
+    with closing(connect(db_path)) as con:
+        con.execute("UPDATE tasks SET done = 1, completed_at = ? WHERE id = ?", (_now(), task_id))
+        con.commit()
+
+
 def _get(con: sqlite3.Connection, task_id: int) -> sqlite3.Row:
     row = con.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     if row is None:

@@ -9,12 +9,12 @@ import shutil
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
 from .config import Settings
-from .tools.tasks import insert_task
+from .samples import SAMPLE_FILES, sample_tasks
+from .tools.tasks import complete_seed_task, insert_task
 
 SESSION_ID = re.compile(r"^[a-f0-9]{32}$")
 
@@ -125,8 +125,14 @@ class SessionStore:
         sess.files_dir.mkdir(parents=True, exist_ok=True)
         (sess.files_dir / "welcome.md").write_text(WELCOME, encoding="utf-8")
         (sess.files_dir / "cs4680_notes.md").write_text(NOTES, encoding="utf-8")
-        due = (date.today() + timedelta(days=7)).isoformat()
-        insert_task(sess.db_path, "Record the 2-minute demo video", due, "high")
+        for rel, text in SAMPLE_FILES.items():
+            path = sess.files_dir / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        for task in sample_tasks():
+            row = insert_task(sess.db_path, task["title"], task["due"], task["priority"])
+            if task.get("done"):
+                complete_seed_task(sess.db_path, row["id"])
 
     def reset(self, sess: Session) -> None:
         shutil.rmtree(sess.root, ignore_errors=True)

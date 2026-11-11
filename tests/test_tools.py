@@ -49,13 +49,13 @@ def test_path_escape_blocked(tmp_path, bad):
 
 
 def test_write_read_delete_cycle(ctx):
-    res = call(ctx, "write_file", path="notes/plan.md", content="hello")
+    res = call(ctx, "write_file", path="drafts/plan.md", content="hello")
     assert res.ok and res.data["created"]
-    assert call(ctx, "read_file", path="notes/plan.md").data["content"] == "hello"
-    call(ctx, "append_file", path="notes/plan.md", content="world")
-    assert call(ctx, "read_file", path="notes/plan.md").data["content"] == "hello\nworld"
-    call(ctx, "delete_file", path="notes/plan.md")
-    assert not (ctx.files_dir / "notes").exists()
+    assert call(ctx, "read_file", path="drafts/plan.md").data["content"] == "hello"
+    call(ctx, "append_file", path="drafts/plan.md", content="world")
+    assert call(ctx, "read_file", path="drafts/plan.md").data["content"] == "hello\nworld"
+    call(ctx, "delete_file", path="drafts/plan.md")
+    assert not (ctx.files_dir / "drafts").exists()
 
 
 def test_executables_cannot_be_written(ctx):
@@ -120,4 +120,14 @@ def test_unsafe_commands_blocked(tmp_path, cmd):
 def test_glob_expansion_stays_in_workspace(ctx):
     argv = build_argv("wc -w *.md", ctx.files_dir)
     assert argv[:2] == ["wc", "-w"]
-    assert set(argv[2:]) == {"welcome.md", "cs4680_notes.md"}
+    assert set(argv[2:]) == {"welcome.md", "cs4680_notes.md", "essay_draft.md", "notes/data_structures.md"}
+
+
+def test_new_workspace_has_sample_files_and_tasks(ctx):
+    from app.samples import SAMPLE_FILES
+    from app.tools.tasks import fetch_tasks
+
+    paths = {f["path"] for f in call(ctx, "list_files").data}
+    assert set(SAMPLE_FILES) <= paths
+    tasks = fetch_tasks(ctx.db_path, "all")
+    assert len(tasks) >= 5 and any(t["done"] for t in tasks)
