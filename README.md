@@ -4,7 +4,7 @@
 
 StudyPilot takes a request in plain English ("read my notes and make a study task for each topic before the exam"), asks a Large Language Model to plan it as **structured tool calls**, validates every call, asks for your OK on anything destructive, **executes** it, and loops the results back to the model until the job is done. Every step is shown in the UI and written to an audit log.
 
-- **Live app:** _add your Render URL here_
+- **Live app:** <https://studypilot-dkgm.onrender.com> (free hosting sleeps when idle, so the first load can take about 30 seconds)
 - **Demo video:** _add your YouTube link here_
 
 ## The problem
